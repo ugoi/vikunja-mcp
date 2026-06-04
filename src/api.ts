@@ -73,7 +73,17 @@ export class VikunjaClient {
       const { project_id, ...rest } = params;
       return this.request<any[]>(`/projects/${project_id}/tasks`, { params: rest as any });
     }
-    return this.request<any[]>("/tasks/all", { params: params as any });
+    try {
+      return await this.request<any[]>("/tasks/all", { params: params as any });
+    } catch {
+      const projects = await this.listProjects();
+      const all: any[] = [];
+      for (const p of projects) {
+        const tasks = await this.request<any[]>(`/projects/${p.id}/tasks`, { params: params as any });
+        all.push(...tasks);
+      }
+      return all;
+    }
   }
 
   async getTask(id: number) {
